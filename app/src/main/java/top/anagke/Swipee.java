@@ -204,13 +204,13 @@ public class Swipee {
         System.err.println("Usage: swipee [<source>] <command> [<arg>...]");
         System.err.println();
         System.err.println("The commands and default sources are:");
-        System.err.println("\tstart <x1> <y1> <x2> <y2> <speed(pixels)> (Default: touchscreen)");
+        System.err.println("\tstart <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
         System.err.println("\t\tStart a swipe, but don't inject the ending ACTION_UP");
-        System.err.println("\tmove  <x1> <y1> <x2> <y2> <speed(pixels)> (Default: touchscreen)");
+        System.err.println("\tmove  <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
         System.err.println("\t\tStart a swipe, but inject neither the ending ACTION_UP nor the beginning ACTION_DOWN");
-        System.err.println("\tend   <x1> <y1> <x2> <y2> <speed(pixels)> (Default: touchscreen)");
+        System.err.println("\tend   <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
         System.err.println("\t\tStart a swipe, but don't inject the beginning ACTION_DOWN");
-        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels)> (Default: touchscreen)");
+        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
         System.err.println("\t\tIdentical to 'start'.");
         System.err.println();
         System.err.println("The sources are: ");
