@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "31.0.0"
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 30
+        versionCode 1
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
+
+}
+
+dependencies {
+}
+
+task compileDebugDex(type: Exec, group: build) {
+}
+
+task compileReleaseDex(type: Exec, group: build) {
+}
+
+afterEvaluate {
+    compileDebugDex {
+        doFirst {
+            file("$buildDir/dex/debug/").mkdirs()
+        }
+        dependsOn bundleDebugClasses
+        executable "${project(":app").android.sdkDirectory}/build-tools/${android.buildToolsVersion}/d8.bat"
+        args "${bundleDebugClasses.outputJar.get()}", "--output", "$buildDir/dex/debug/${rootProject.name}.jar"
+    }
+    compileReleaseDex {
+        doFirst {
+            file("$buildDir/dex/release/").mkdirs()
+        }
+        dependsOn bundleReleaseClasses
+        executable "${project(":app").android.sdkDirectory}/build-tools/${android.buildToolsVersion}/d8.bat"
+        args "${bundleReleaseClasses.outputJar.get()}", "--output", "$buildDir/dex/release/${rootProject.name}.jar"
+    }
+}
+
+
