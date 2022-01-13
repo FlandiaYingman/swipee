@@ -26,7 +26,7 @@ Run it using `app_process`!
 
 ```shell
 # Run this in an Adb Shell! 
-app_process -Djava.class.path=/sdcard/swipee.jar /system/bin top.anagke.Swipee end [<source>] <command> [<arg>...]
+app_process -Djava.class.path=/sdcard/swipee.jar /system/bin top.anagke.Swipee [<source>] <command> [<arg>...]
 
 # Usage: app_process [java-options] cmd-dir start-class-name
 
