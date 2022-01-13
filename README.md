@@ -1,6 +1,6 @@
 # Swipe Enhanced (swipee)
 
-A enhanced replacement for `adb shell input swipe`.
+An enhanced replacement for `adb shell input swipe`.
 
 Since the original `input` executable so simple that it doesn't support complex swipes, `swipee` is out! It provides
 different commands that support complexer swipes continuously instead of segmenting your swipes.
