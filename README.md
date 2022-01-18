@@ -18,15 +18,16 @@ First, compile as dex file in a jar.
 Then, push it into your device.
 
 ```shell
-# I choose to push it under /sdcard. You can put it wherever you prefer.
-adb push ./app/build/dex/release/swipee.jar /sdcard/swipee.jar
+# Push to /data/local/tmp/,
+# because you have full permission to execute files under /data/local/tmp
+adb push ./app/build/dex/release/swipee.jar /data/local/tmp/swipee.jar
 ```
 
 Run it using `app_process`!
 
 ```shell
 # Run this in an Adb Shell! 
-app_process -Djava.class.path=/sdcard/swipee.jar /system/bin top.anagke.Swipee [<source>] <command> [<arg>...]
+app_process -Djava.class.path=/data/local/tmp/swipee.jar /system/bin top.anagke.Swipee [<source>] <command> [<arg>...]
 
 # Usage: app_process [java-options] cmd-dir start-class-name
 
@@ -48,3 +49,11 @@ Note that the most significant usage difference between `swipee` and `input swip
 required `speed` argument at the last while `input swipe` accepts a optional `duration` argument. The reason why I
 change this is that, comparing to speed, accuracy is more important to this tool. And you don't need to calculate
 different duration for different swiping length. (The recommend speed for `swipee` is ~1)
+
+# License
+
+This project is licensed under Apache License, version 2.0.
+
+The source code of this project is derived from the original AOSP's *Input*, which can be found
+at [here](https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java)
+.
