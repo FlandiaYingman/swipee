@@ -57,3 +57,8 @@ This project is licensed under Apache License, version 2.0.
 The source code of this project is derived from the original AOSP's *Input*, which can be found
 at [here](https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java)
 .
+
+```shell
+adb push ./app/build/dex/release/swipee.jar /data/local/tmp/swipee.jar && 
+adb shell "app_process -Djava.class.path=/data/local/tmp/swipee.jar /system/bin top.anagke.Swipee"
+```

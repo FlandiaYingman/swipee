@@ -3,10 +3,9 @@ package top.anagke;
 import static android.os.SystemClock.uptimeMillis;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
-import static android.view.MotionEvent.ACTION_UP;
 import static java.lang.Float.parseFloat;
-import static java.lang.Integer.parseInt;
 import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 import android.hardware.input.InputManager;
@@ -82,25 +81,13 @@ public class Swipee {
             float x2 = parseFloat(args[index + 3]);
             float y2 = parseFloat(args[index + 4]);
             float speed = parseFloat(args[index + 5]);
-            switch (command) {
-                case "exact":
-                    sendSwipeExact(inputSource, x1, y1, x2, y2, speed);
-                    return;
-                case "start":
-                    sendSwipeStart(inputSource, x1, y1, x2, y2, speed);
-                    return;
-                case "move":
-                    sendSwipeMove(inputSource, x1, y1, x2, y2, speed);
-                    return;
-                case "end":
-                    sendSwipeEnd(inputSource, x1, y1, x2, y2, speed);
-                    return;
-                default:
-                    System.err.println("Error: Unknown command: " + command);
-                    showUsage();
-                    return;
-
+            if ("exact".equals(command)) {
+                sendSwipeExact(inputSource, x1, y1, x2, y2, speed);
+                return;
             }
+            System.err.println("Error: Unknown command: " + command);
+            showUsage();
+            return;
         } catch (NumberFormatException ex) {
             ex.printStackTrace();
         }
@@ -108,13 +95,24 @@ public class Swipee {
         showUsage();
     }
 
-    private void doSwipe(int inputSource, float x1, float y1, float x2, float y2, float speed) {
-        float fullDistance = (float) sqrt(abs(x1 - x2) + abs(y1 - y2));
-        for (float movedDistance = 0.0f; movedDistance < fullDistance; movedDistance += speed) {
-            float alpha = movedDistance / fullDistance;
-            injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), lerp(x1, x2, alpha), lerp(y1, y2, alpha), 1.0f);
+
+    private static int getSource(int inputSource, int defaultSource) {
+        return inputSource == InputDevice.SOURCE_UNKNOWN ? defaultSource : inputSource;
+    }
+
+    private static void showUsage() {
+        System.err.println("Usage: swipee [<source>] <command> [<arg>...]");
+        System.err.println();
+        System.err.println("The commands and default sources are:");
+        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
+        System.err.println("\t\tStart a swipe, but don't inject the ending ACTION_UP");
+        System.err.println();
+        System.err.println("The sources are: ");
+        for (String src : SOURCES.keySet()) {
+            System.err.println("      " + src);
         }
     }
+
 
     private void sendSwipeExact(int inputSource, float x1, float y1, float x2, float y2, float speed) {
         injectMotionEvent(inputSource, ACTION_DOWN, uptimeMillis(), x1, y1, 1.0f);
@@ -122,35 +120,23 @@ public class Swipee {
         injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
     }
 
-    private void sendSwipeStart(int inputSource, float x1, float y1, float x2, float y2, float speed) {
-        injectMotionEvent(inputSource, ACTION_DOWN, uptimeMillis(), x1, y1, 1.0f);
-        doSwipe(inputSource, x1, y1, x2, y2, speed);
-        injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
-    }
-
-    private void sendSwipeMove(int inputSource, float x1, float y1, float x2, float y2, float speed) {
-        injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x1, y1, 1.0f);
-        doSwipe(inputSource, x1, y1, x2, y2, speed);
-        injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
-    }
-
-    private void sendSwipeEnd(int inputSource, float x1, float y1, float x2, float y2, float speed) {
-        injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x1, y1, 1.0f);
-        doSwipe(inputSource, x1, y1, x2, y2, speed);
-        injectMotionEvent(inputSource, ACTION_UP, uptimeMillis(), x2, y2, 1.0f);
-    }
-
-    private int getInputDeviceId(int inputSource) {
-        final int DEFAULT_DEVICE_ID = 0;
-        int[] devIds = InputDevice.getDeviceIds();
-        for (int devId : devIds) {
-            InputDevice inputDev = InputDevice.getDevice(devId);
-            if (inputDev.supportsSource(inputSource)) {
-                return devId;
-            }
+    private void doSwipe(int inputSource, float x1, float y1, float x2, float y2, float speed) {
+        float fullDistance = (float) sqrt(abs(x1 - x2) + abs(y1 - y2));
+        for (float movedDistance = 0.0f; movedDistance < fullDistance; movedDistance += speed) {
+            float alpha = movedDistance / fullDistance;
+            injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), cerp(x1, x2, alpha), cerp(y1, y2, alpha), 1.0f);
         }
-        return DEFAULT_DEVICE_ID;
+        injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
     }
+
+    /**
+     * Converts a 0 ~ 1 number by cubic interpolation (ease in and out).
+     */
+    private static float cerp(float a, float b, float alpha) {
+        double cubic = alpha < 0.5 ? 4 * alpha * alpha * alpha : 1 - pow(-2 * alpha + 2, 3) / 2;
+        return (float) ((b - a) * cubic + a);
+    }
+
 
     /**
      * Builds a MotionEvent and injects it into the event stream.
@@ -162,7 +148,7 @@ public class Swipee {
      * @param y           y coordinate of event
      * @param pressure    pressure of event
      */
-    private void injectMotionEvent(int inputSource, int action, long when, float x, float y, float pressure) {
+    private static void injectMotionEvent(int inputSource, int action, long when, float x, float y, float pressure) {
         final float DEFAULT_SIZE = 1.0f;
         final int DEFAULT_META_STATE = 0;
         final float DEFAULT_PRECISION_X = 1.0f;
@@ -177,33 +163,6 @@ public class Swipee {
         injectInputEvent(event, INJECT_INPUT_EVENT_MODE_WAIT_FOR_FINISH);
     }
 
-    private static float lerp(float a, float b, float alpha) {
-        return (b - a) * alpha + a;
-    }
-
-    private static int getSource(int inputSource, int defaultSource) {
-        return inputSource == InputDevice.SOURCE_UNKNOWN ? defaultSource : inputSource;
-    }
-
-    private static void showUsage() {
-        System.err.println("Usage: swipee [<source>] <command> [<arg>...]");
-        System.err.println();
-        System.err.println("The commands and default sources are:");
-        System.err.println("\tstart <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
-        System.err.println("\t\tStart a swipe, but don't inject the ending ACTION_UP");
-        System.err.println("\tmove  <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
-        System.err.println("\t\tStart a swipe, but inject neither the ending ACTION_UP nor the beginning ACTION_DOWN");
-        System.err.println("\tend   <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
-        System.err.println("\t\tStart a swipe, but don't inject the beginning ACTION_DOWN");
-        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
-        System.err.println("\t\tIdentical to 'start'.");
-        System.err.println();
-        System.err.println("The sources are: ");
-        for (String src : SOURCES.keySet()) {
-            System.err.println("      " + src);
-        }
-    }
-
     private static void injectInputEvent(InputEvent event, int mode) {
         try {
             Class<InputManager> clazz = InputManager.class;
@@ -215,6 +174,18 @@ public class Swipee {
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    private static int getInputDeviceId(int inputSource) {
+        final int DEFAULT_DEVICE_ID = 0;
+        int[] devIds = InputDevice.getDeviceIds();
+        for (int devId : devIds) {
+            InputDevice inputDev = InputDevice.getDevice(devId);
+            if (inputDev.supportsSource(inputSource)) {
+                return devId;
+            }
+        }
+        return DEFAULT_DEVICE_ID;
     }
 
 }
