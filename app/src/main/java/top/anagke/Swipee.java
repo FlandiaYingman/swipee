@@ -5,7 +5,6 @@ import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static java.lang.Float.parseFloat;
 import static java.lang.Math.abs;
-import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 import android.hardware.input.InputManager;
@@ -124,17 +123,17 @@ public class Swipee {
         float fullDistance = (float) sqrt(abs(x1 - x2) + abs(y1 - y2));
         for (float movedDistance = 0.0f; movedDistance < fullDistance; movedDistance += speed) {
             float alpha = movedDistance / fullDistance;
-            injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), cerp(x1, x2, alpha), cerp(y1, y2, alpha), 1.0f);
+            injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), serp(x1, x2, alpha), serp(y1, y2, alpha), 1.0f);
         }
         injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
     }
 
     /**
-     * Converts a 0 ~ 1 number by cubic interpolation (ease in and out).
+     * Converts a 0 ~ 1 number by sine interpolation (ease in and out).
      */
-    private static float cerp(float a, float b, float alpha) {
-        double cubic = alpha < 0.5 ? 4 * alpha * alpha * alpha : 1 - pow(-2 * alpha + 2, 3) / 2;
-        return (float) ((b - a) * cubic + a);
+    private static float serp(float a, float b, float alpha) {
+        double interpolation = -(Math.cos(Math.PI * alpha) - 1) / 2;
+        return (float) ((b - a) * interpolation + a);
     }
 
 
