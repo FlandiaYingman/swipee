@@ -4,7 +4,7 @@ import static android.os.SystemClock.uptimeMillis;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static java.lang.Float.parseFloat;
-import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 import android.hardware.input.InputManager;
@@ -22,7 +22,7 @@ import java.util.Map;
  * Command that sends key events to the device, either by their keycode, or by
  * desired character output.
  */
-@SuppressWarnings({"JavaReflectionMemberAccess", "SameParameterValue", "ConstantConditions"})
+@SuppressWarnings({"JavaReflectionMemberAccess", "SameParameterValue", "ConstantConditions", "unused", "Convert2Diamond"})
 public class Swipee {
 
     public static final int INJECT_INPUT_EVENT_MODE_ASYNC = 0; // see InputDispatcher.h
@@ -103,7 +103,7 @@ public class Swipee {
         System.err.println("Usage: swipee [<source>] <command> [<arg>...]");
         System.err.println();
         System.err.println("The commands and default sources are:");
-        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels per event)> (Default: touchscreen)");
+        System.err.println("\texact <x1> <y1> <x2> <y2> <speed(pixels per milliseconds)> (Default: touchscreen)");
         System.err.println("\t\tStart a swipe, but don't inject the ending ACTION_UP");
         System.err.println();
         System.err.println("The sources are: ");
@@ -120,11 +120,26 @@ public class Swipee {
     }
 
     private void doSwipe(int inputSource, float x1, float y1, float x2, float y2, float speed) {
-        float fullDistance = (float) sqrt(abs(x1 - x2) + abs(y1 - y2));
-        for (float movedDistance = 0.0f; movedDistance < fullDistance; movedDistance += speed) {
-            float alpha = movedDistance / fullDistance;
-            injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), serp(x1, x2, alpha), serp(y1, y2, alpha), 1.0f);
-        }
+        // the euclid distance between p1 and p2
+        float distance = (float) sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+        // the duration in milliseconds
+        long duration = (long) (distance / speed);
+
+        long begin = uptimeMillis();
+        long end = begin + duration;
+        long now;
+        float alpha;
+        do {
+            now = uptimeMillis();
+            alpha = (float) (begin - now) / (float) (begin - end);
+            injectMotionEvent(inputSource,
+                    ACTION_MOVE,
+                    now,
+                    serp(x1, x2, (float) alpha),
+                    serp(y1, y2, (float) alpha),
+                    1.0f
+            );
+        } while (now < end);
         injectMotionEvent(inputSource, ACTION_MOVE, uptimeMillis(), x2, y2, 1.0f);
     }
 
